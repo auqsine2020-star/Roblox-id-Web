@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Launcher Player</title>
+  <meta name="description" content="Launcher Player browser concept for Roblox game ID and player ID launching." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0a0d12;
+      --bg-2:#0f1520;
+      --panel:rgba(17,24,39,.72);
+      --panel-strong:rgba(10,16,28,.88);
+      --line:rgba(124, 144, 179, 0.22);
+      --text:#eef4ff;
+      --muted:#9eb0cc;
+      --blue:#5cc8ff;
+      --cyan:#68f0ff;
+      --lime:#9cff74;
+      --violet:#8a7dff;
+      --danger:#ff7f96;
+      --shadow:0 20px 70px rgba(0,0,0,.45);
+      --radius:24px;
+      --radius-sm:16px;
+      --container:min(1180px, calc(100vw - 32px));
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Inter",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(92,200,255,.18), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(138,125,255,.14), transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(156,255,116,.10), transparent 26%),
+        linear-gradient(180deg, #070a10 0%, #0c1017 50%, #0a0d12 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+      opacity:.22;
+    }
+
+    .orb{
+      position:fixed;
+      border-radius:50%;
+      filter:blur(80px);
+      pointer-events:none;
+      opacity:.35;
+      z-index:0;
+    }
+    .orb.a{width:280px;height:280px;background:var(--blue);top:-60px;left:-40px;}
+    .orb.b{width:240px;height:240px;background:var(--violet);right:-40px;top:120px;}
+    .orb.c{width:280px;height:280px;background:var(--lime);left:20%;bottom:-120px;opacity:.18;}
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      width:var(--container);
+      margin:0 auto;
+    }
+
+    .reveal{
+      opacity:0;
+      transform:translateY(24px);
+      transition:opacity .8s ease, transform .8s ease;
+    }
+    .reveal.visible{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    header{
+      padding:18px 0 0;
+    }
+
+    .nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:14px 18px;
+      border:1px solid var(--line);
+      background:rgba(10,15,24,.48);
+      backdrop-filter: blur(18px);
+      border-radius:999px;
+      box-shadow:var(--shadow);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .brand-mark{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:
+        linear-gradient(145deg, rgba(104,240,255,.24), rgba(138,125,255,.15)),
+        rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), 0 10px 30px rgba(92,200,255,.16);
+    }
+
+    .brand-mark svg{width:24px;height:24px}
+    .brand-text strong{
+      display:block;
+      font-family:"Orbitron",sans-serif;
+      letter-spacing:.12em;
+      font-size:.95rem;
+    }
+    .brand-text span{
+      color:var(--muted);
+      font-size:.8rem;
+    }
+
+    .nav-links{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      text-decoration:none;
+      color:var(--text);
+      border:1px solid var(--line);
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:.92rem;
+      background:rgba(255,255,255,.03);
+      transition:transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+    .pill:hover{
+      transform:translateY(-2px);
+      border-color:rgba(104,240,255,.45);
+      background:rgba(104,240,255,.08);
+    }
+
+    main{
+      padding:34px 0 48px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:24px;
+      align-items:stretch;
+    }
+
+    .hero-panel,
+    .console-panel,
+    .status-panel,
+    .info-panel{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(19,28,44,.72), rgba(8,12,20,.8));
+      backdrop-filter: blur(18px);
+      box-shadow:var(--shadow);
+    }
+
+    .hero-panel{
+      padding:32px;
+      min-height:520px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero-panel::after{
+      content:"";
+      position:absolute;
+      inset:auto -10% -30% auto;
+      width:320px;
+      height:320px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(104,240,255,.18), transparent 62%);
+      pointer-events:none;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color:var(--cyan);
+      font-size:.84rem;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      margin-bottom:20px;
+    }
+
+    .dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:var(--lime);
+      box-shadow:0 0 0 8px rgba(156,255,116,.10);
+      animation:pulse 1.8s infinite;
+    }
+
+    @keyframes pulse{
+      0%,100%{transform:scale(1);opacity:1}
+      50%{transform:scale(1.18);opacity:.7}
+    }
+
+    h1{
+      margin:0;
+      font-family:"Orbitron",sans-serif;
+      font-weight:800;
+      line-height:.95;
+      letter-spacing:-.03em;
+      font-size:clamp(2.7rem, 7vw, 6.2rem);
+      max-width:10ch;
+      text-transform:uppercase;
+    }
+
+    .hero-copy{
+      margin-top:20px;
+      max-width:60ch;
+      color:var(--muted);
+      font-size:1.02rem;
+      line-height:1.7;
+    }
+
+    .hero-grid{
+      margin-top:28px;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:14px;
+    }
+
+    .mini-stat{
+      padding:16px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      background:rgba(255,255,255,.03);
+    }
+    .mini-stat b{
+      display:block;
+      font-family:"Orbitron",sans-serif;
+      font-size:1.15rem;
+      margin-bottom:6px;
+    }
+    .mini-stat span{
+      color:var(--muted);
+      font-size:.85rem;
+      line-height:1.45;
+    }
+
+    .hero-cta{
+      margin-top:34px;
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height:52px;
+      padding:0 20px;
+      border-radius:16px;
+      font-weight:700;
+      font-size:.95rem;
+      transition:transform .18s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease;
+    }
+
+    .btn:active{transform:scale(.98)}
+    .btn.primary{
+      color:#081019;
+      background:linear-gradient(135deg, var(--cyan), var(--blue));
+      box-shadow:0 16px 40px rgba(92,200,255,.25);
+    }
+    .btn.primary:hover{
+      transform:translateY(-2px);
+      box-shadow:0 22px 50px rgba(92,200,255,.34);
+    }
+    .btn.ghost{
+      color:var(--text);
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+    }
+    .btn.ghost:hover{
+      transform:translateY(-2px);
+      border-color:rgba(138,125,255,.45);
+      background:rgba(138,125,255,.08);
+    }
+
+    .console-panel{
+      padding:18px;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      min-height:520px;
+      overflow:hidden;
+    }
+
+    .console-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      padding:8px 8px 18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:18px;
+    }
+
+    .window-dots{
+      display:flex;
+      gap:8px;
+    }
+    .window-dots span{
+      width:10px;height:10px;border-radius:50%;
+      background:rgba(255,255,255,.18);
+    }
+    .window-dots span:nth-child(1){background:#ff6c7b}
+    .window-dots span:nth-child(2){background:#ffd76d}
+    .window-dots span:nth-child(3){background:#84f59d}
+
+    .console-title{
+      font-family:"Orbitron",sans-serif;
+      letter-spacing:.14em;
+      font-size:.8rem;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+
+    .launcher-grid{
+      display:grid;
+      gap:14px;
+      align-content:start;
+    }
+
+    .mode-switch{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:8px;
+    }
+
+    .mode-btn{
+      min-height:50px;
+      border-radius:14px;
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--muted);
+      font-weight:700;
+      cursor:pointer;
+      font-family:"Inter",sans-serif;
+      transition:.25s ease;
+    }
+    .mode-btn.active{
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(104,240,255,.14), rgba(138,125,255,.10));
+      border-color:rgba(104,240,255,.25);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .input-shell{
+      display:grid;
+      gap:12px;
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+    }
+
+    .input-shell label{
+      font-size:.82rem;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.15em;
+    }
+
+    .input-shell input{
+      width:100%;
+      min-height:58px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(6,10,18,.85);
+      color:var(--text);
+      padding:0 16px;
+      font-size:1rem;
+      outline:none;
+      transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .input-shell input:focus{
+      border-color:rgba(104,240,255,.5);
+      box-shadow:0 0 0 4px rgba(104,240,255,.10);
+      transform:translateY(-1px);
+    }
+
+    .accept-wrap{
+      display:grid;
+      gap:14px;
+    }
+
+    .accept-btn{
+      position:relative;
+      overflow:hidden;
+      min-height:58px;
+      border-radius:18px;
+      border:1px solid rgba(104,240,255,.25);
+      background:
+        linear-gradient(135deg, rgba(104,240,255,.15), rgba(92,200,255,.08)),
+        rgba(255,255,255,.03);
+      color:var(--text);
+      font-family:"Orbitron",sans-serif;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition:transform .2s ease, box-shadow .25s ease, border-color .25s ease;
+      box-shadow:0 12px 30px rgba(92,200,255,.12);
+    }
+    .accept-btn:hover{
+      transform:translateY(-2px);
+      border-color:rgba(104,240,255,.55);
+      box-shadow:0 18px 40px rgba(92,200,255,.18);
+    }
+
+    .loading-box{
+      display:none;
+      gap:10px;
+      padding:16px;
+      border-radius:18px;
+      border:1px solid rgba(104,240,255,.25);
+      background:rgba(8,16,28,.9);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .loading-box.active{
+      display:grid;
+      animation:fadeUp .35s ease;
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .loading-label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-size:.94rem;
+    }
+
+    .loading-label span:last-child{
+      color:var(--cyan);
+      font-family:"Orbitron",sans-serif;
+      font-size:.84rem;
+      letter-spacing:.1em;
+    }
+
+    .progress{
+      height:12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .progress-bar{
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--cyan), var(--blue), var(--lime));
+      box-shadow:0 0 30px rgba(104,240,255,.35);
+      transition:width .18s linear;
+    }
+
+    .tip{
+      color:var(--muted);
+      font-size:.85rem;
+      line-height:1.6;
+      padding:0 2px;
+    }
+
+    .status-section{
+      margin-top:24px;
+      display:grid;
+      grid-template-columns:1fr .8fr;
+      gap:24px;
+    }
+
+    .status-panel{
+      padding:24px;
+    }
+
+    .status-head{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:18px;
+    }
+
+    .status-head h2,
+    .info-panel h2{
+      margin:0;
+      font-family:"Orbitron",sans-serif;
+      font-size:clamp(1.2rem, 3vw, 1.8rem);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+
+    .status-head p{
+      margin:8px 0 0;
+      color:var(--muted);
+      max-width:52ch;
+      line-height:1.65;
+      font-size:.95rem;
+    }
+
+    .status-log{
+      display:grid;
+      gap:12px;
+    }
+
+    .log-item{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:12px;
+      align-items:start;
+      padding:14px 0;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    .log-item:first-child{border-top:none;padding-top:0}
+    .log-badge{
+      min-width:78px;
+      text-align:center;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:.75rem;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      background:rgba(104,240,255,.10);
+      color:var(--cyan);
+      border:1px solid rgba(104,240,255,.2);
+    }
+    .log-copy b{
+      display:block;
+      margin-bottom:5px;
+    }
+    .log-copy span{
+      color:var(--muted);
+      line-height:1.6;
+      font-size:.93rem;
+    }
+
+    .info-panel{
+      padding:24px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:22px;
+    }
+
+    .info-list{
+      display:grid;
+      gap:16px;
+    }
+    .info-list div{
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    .info-list div:first-child{
+      border-top:none;
+      padding-top:0;
+    }
+    .info-list b{
+      display:block;
+      margin-bottom:6px;
+      color:var(--text);
+    }
+    .info-list span{
+      color:var(--muted);
+      line-height:1.6;
+      font-size:.93rem;
+    }
+
+    .notice{
+      border:1px solid rgba(255,127,150,.24);
+      background:rgba(255,127,150,.07);
+      color:#ffd8de;
+      padding:14px 16px;
+      border-radius:16px;
+      line-height:1.6;
+      font-size:.9rem;
+    }
+
+    footer{
+      padding:10px 0 34px;
+    }
+
+    .footer-bar{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:center;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:.88rem;
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:20px;
+    }
+
+    @media (max-width: 980px){
+      .hero,
+      .status-section{
+        grid-template-columns:1fr;
+      }
+      .hero-panel,
+      .console-panel{
+        min-height:auto;
+      }
+    }
+
+    @media (max-width: 640px){
+      .nav{
+        border-radius:24px;
+        padding:14px;
+        align-items:flex-start;
+        flex-direction:column;
+      }
+      .hero-panel{
+        padding:24px;
+      }
+      .hero-grid{
+        grid-template-columns:1fr;
+      }
+      .status-head{
+        flex-direction:column;
+      }
+      .footer-bar{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      h1{
+        max-width:12ch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+
+  <header class="wrap reveal">
+    <nav class="nav" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z" stroke="url(#g1)" stroke-width="1.4"/>
+            <path d="M9.2 9.2h5.6v5.6H9.2z" stroke="url(#g1)" stroke-width="1.4"/>
+            <defs>
+              <linearGradient id="g1" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#68f0ff"/>
+                <stop offset="1" stop-color="#8a7dff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>Launcher Player</strong>
+          <span>Roblox launch console concept</span>
+        </div>
+      </div>
+
+      <div class="nav-links">
+        <a class="pill" href="#launcher">Launch</a>
+        <a class="pill" href="#status">Status</a>
+        <a class="pill" href="#guide">Guide</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <article class="hero-panel reveal">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Direct launch interface</div>
+          <h1>Launcher Player</h1>
+          <p class="hero-copy">
+            Search a <strong>game ID</strong> or a <strong>player ID</strong> and trigger a dramatic Roblox-style launch sequence.
+            This interface is designed as a polished browser launcher concept with loading feedback, accept flow, and instant deep-link attempt behavior.
+          </p>
+
+          <div class="hero-grid">
+            <div class="mini-stat">
+              <b>Game ID</b>
+              <span>Launch path prepares a direct game start attempt through Roblox protocol linking.</span>
+            </div>
+            <div class="mini-stat">
+              <b>Player ID</b>
+              <span>Friend lookup mode prepares a profile or social route attempt for the entered player ID.</span>
+            </div>
+            <div class="mini-stat">
+              <b>Live Status</b>
+              <span>Accept button reveals loading border, progress bar, and launch messaging instantly.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-cta">
+          <a href="#launcher" class="btn primary">Open Launcher</a>
+          <a href="#guide" class="btn ghost">How It Works</a>
+        </div>
+      </article>
+
+      <aside class="console-panel reveal" id="launcher" aria-labelledby="launcher-title">
+        <div class="console-top">
+          <div class="window-dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="console-title" id="launcher-title">Launcher Console</div>
+        </div>
+
+        <div class="launcher-grid">
+          <div class="mode-switch" role="tablist" aria-label="Launcher mode">
+            <button class="mode-btn active" id="gameModeBtn" role="tab" aria-selected="true" aria-controls="gamePanel">Game ID</button>
+            <button class="mode-btn" id="playerModeBtn" role="tab" aria-selected="false" aria-controls="playerPanel">Player ID</button>
+          </div>
+
+          <section id="gamePanel" class="input-shell" role="tabpanel" aria-labelledby="gameModeBtn">
+            <label for="gameId">Search ID Game</label>
+            <input id="gameId" inputmode="numeric" autocomplete="off" placeholder="Enter Roblox Game ID" />
+            <div class="accept-wrap">
+              <button class="accept-btn" id="acceptGame">Accept Launch</button>
+              <div class="loading-box" id="gameLoadingBox" aria-live="polite">
+                <div class="loading-label">
+                  <span id="gameLoadingText">Launching to the Roblox Player</span>
+                  <span id="gamePercent">0%</span>
+                </div>
+                <div class="progress" aria-hidden="true">
+                  <div class="progress-bar" id="gameProgress"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="playerPanel" class="input-shell" role="tabpanel" aria-labelledby="playerModeBtn" hidden>
+            <label for="playerId">Search ID Player</label>
+            <input id="playerId" inputmode="numeric" autocomplete="off" placeholder="Enter Roblox Player ID" />
+            <div class="accept-wrap">
+              <button class="accept-btn" id="acceptPlayer">Accept Find</button>
+              <div class="loading-box" id="playerLoadingBox" aria-live="polite">
+                <div class="loading-label">
+                  <span id="playerLoadingText">Launching to the Roblox Player to Find Player Id</span>
+                  <span id="playerPercent">0%</span>
+                </div>
+                <div class="progress" aria-hidden="true">
+                  <div class="progress-bar" id="playerProgress"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <p class="tip">
+            Tip: Browser support for opening native Roblox protocol links varies by device and browser settings.
+            This page attempts supported deep links and also shows clear visual launch progress.
+          </p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="status-section" id="status">
+      <article class="status-panel reveal">
+        <div class="status-head">
+          <div>
+            <h2>Launch Status</h2>
+            <p>
+              Real-time activity appears here when you trigger either flow. The interface updates message, mode, and completion state.
+            </p>
+          </div>
+        </div>
+
+        <div class="status-log" id="statusLog">
+          <div class="log-item">
+            <div class="log-badge">Idle</div>
+            <div class="log-copy">
+              <b>Waiting for input</b>
+              <span>Choose Game ID or Player ID mode, enter an ID, then press the accept button to begin.</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="info-panel reveal" id="guide">
+        <div>
+          <h2>Guide</h2>
+        </div>
+
+        <div class="info-list">
+          <div>
+            <b>Game Launch Flow</b>
+            <span>Enter a Roblox place or experience ID, press accept, and the launch box animates with a bordered loading state.</span>
+          </div>
+          <div>
+            <b>Player Search Flow</b>
+            <span>Enter a player ID and press accept to run the friend/profile style lookup sequence with its own launch message.</span>
+          </div>
+          <div>
+            <b>Roblox Open Attempt</b>
+            <span>The page uses a Roblox protocol attempt first, then falls back to Roblox web URLs when available in the browser.</span>
+          </div>
+        </div>
+
+        <div class="notice">
+          Note: A standard webpage cannot guarantee instant server joining, opening friends lists in the native app, or GitHub-based friend discovery without official APIs, permissions, or a custom desktop app. This demo provides the browser UI and best-effort launch behavior only.
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="wrap reveal">
+    <div class="footer-bar">
+      <span>Launcher Player interface concept</span>
+      <span>Built as a single-file responsive HTML experience</span>
+    </div>
+  </footer>
+
+  <script>
+    const gameModeBtn = document.getElementById('gameModeBtn');
+    const playerModeBtn = document.getElementById('playerModeBtn');
+    const gamePanel = document.getElementById('gamePanel');
+    const playerPanel = document.getElementById('playerPanel');
+    const statusLog = document.getElementById('statusLog');
+
+    function setMode(mode){
+      const gameActive = mode === 'game';
+      gameModeBtn.classList.toggle('active', gameActive);
+      playerModeBtn.classList.toggle('active', !gameActive);
+      gameModeBtn.setAttribute('aria-selected', gameActive);
+      playerModeBtn.setAttribute('aria-selected', !gameActive);
+      gamePanel.hidden = !gameActive;
+      playerPanel.hidden = gameActive;
+    }
+
+    gameModeBtn.addEventListener('click', ()=> setMode('game'));
+    playerModeBtn.addEventListener('click', ()=> setMode('player'));
+
+    function addStatus(type, title, text){
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <div class="log-badge">${type}</div>
+        <div class="log-copy">
+          <b>${title}</b>
+          <span>${text}</span>
+        </div>
+      `;
+      statusLog.prepend(item);
+    }
+
+    function animateLaunch({box, bar, percent, textNode, message, finalAction, successTitle, successText, idValue}){
+      box.classList.add('active');
+      textNode.textContent = message;
+      bar.style.width = '0%';
+      percent.textContent = '0%';
+
+      addStatus('Init', 'Launch sequence started', `Preparing request for ID ${idValue}.`);
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 14 + 7;
+        if(progress >= 100){
+          progress = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            finalAction();
+            addStatus('Done', successTitle, successText);
+          }, 260);
+        }
+        bar.style.width = progress + '%';
+        percent.textContent = Math.floor(progress) + '%';
+
+        if(progress > 28 && progress < 50){
+          addStatus('Load', 'Validating launch protocol', 'Checking browser handoff and building Roblox open request.');
+        }
+        if(progress > 62 && progress < 84){
+          addStatus('Sync', 'Opening Roblox target', 'Attempting native app handoff or web fallback based on browser support.');
+        }
+      }, 180);
+    }
+
+    function attemptOpen(urls){
+      let i = 0;
+      const openNext = () => {
+        if(i >= urls.length) return;
+        window.location.href = urls[i];
+        i++;
+        if(i < urls.length){
+          setTimeout(openNext, 900);
+        }
+      };
+      openNext();
+    }
+
+    document.getElementById('acceptGame').addEventListener('click', () => {
+      const gameId = document.getElementById('gameId').value.trim();
+      if(!gameId){
+        addStatus('Error', 'Missing game ID', 'Please enter a valid Roblox game ID before pressing accept.');
+        document.getElementById('gameId').focus();
+        return;
+      }
+
+      animateLaunch({
+        box: document.getElementById('gameLoadingBox'),
+        bar: document.getElementById('gameProgress'),
+        percent: document.getElementById('gamePercent'),
+        textNode: document.getElementById('gameLoadingText'),
+        message: 'Launching to the Roblox Player',
+        idValue: gameId,
+        successTitle: 'Game launch request sent',
+        successText: `A Roblox open request was attempted for game ID ${gameId}.`,
+        finalAction: () => {
+          const protocolUrl = `roblox://placeID=${encodeURIComponent(gameId)}`;
+          const webFallback = `https://www.roblox.com/games/${encodeURIComponent(gameId)}`;
+          attemptOpen([protocolUrl, webFallback]);
+        }
+      });
+    });
+
+    document.getElementById('acceptPlayer').addEventListener('click', () => {
+      const playerId = document.getElementById('playerId').value.trim();
+      if(!playerId){
+        addStatus('Error', 'Missing player ID', 'Please enter a valid Roblox player ID before pressing accept.');
+        document.getElementById('playerId').focus();
+        return;
+      }
+
+      animateLaunch({
+        box: document.getElementById('playerLoadingBox'),
+        bar: document.getElementById('playerProgress'),
+        percent: document.getElementById('playerPercent'),
+        textNode: document.getElementById('playerLoadingText'),
+        message: 'Launching to the Roblox Player to Find Player Id',
+        idValue: playerId,
+        successTitle: 'Player lookup request sent',
+        successText: `A Roblox open request was attempted for player ID ${playerId}.`,
+        finalAction: () => {
+          const protocolUrl = `roblox://navigation/profile?userId=${encodeURIComponent(playerId)}`;
+          const webFallback = `https://www.roblox.com/users/${encodeURIComponent(playerId)}/profile`;
+          attemptOpen([protocolUrl, webFallback]);
+        }
+      });
+    });
+
+    const observer = new IntersectionObserver((entries)=>{
+      entries.forEach((entry)=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+        }
+      });
+    }, {threshold: .14});
+
+    document.querySelectorAll('.reveal').forEach((el, index)=>{
+      el.style.transitionDelay = `${index * 80}ms`;
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
