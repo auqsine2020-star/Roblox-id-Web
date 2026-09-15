@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Studio v2</title>
+  <meta name="description" content="Creator Studio v2 mock interface for searching a place ID and launching into Roblox Studio." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1020;
+      --bg-2:#111937;
+      --panel:rgba(18, 26, 58, 0.72);
+      --panel-strong:rgba(15, 21, 45, 0.92);
+      --line:rgba(138, 161, 255, 0.22);
+      --text:#eef2ff;
+      --muted:#aeb8df;
+      --accent:#73f0ff;
+      --accent-2:#8f7bff;
+      --success:#76ffb3;
+      --warning:#ffd36e;
+      --shadow:0 20px 80px rgba(0,0,0,.45);
+      --radius:24px;
+      --radius-sm:14px;
+      --max:1200px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:"Inter", sans-serif;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(115,240,255,.14), transparent 25%),
+        radial-gradient(circle at 90% 15%, rgba(143,123,255,.12), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(118,255,179,.08), transparent 30%),
+        linear-gradient(180deg, #09101f 0%, #0b1020 38%, #0a0e1a 100%);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size:48px 48px;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.75), transparent 92%);
+      opacity:.25;
+    }
+
+    .orb{
+      position:fixed;
+      border-radius:50%;
+      filter:blur(50px);
+      opacity:.4;
+      pointer-events:none;
+      z-index:0;
+      animation:float 10s ease-in-out infinite;
+    }
+    .orb.a{width:240px;height:240px;background:#4fd8ff;top:7%;left:-4%;}
+    .orb.b{width:280px;height:280px;background:#7d68ff;top:20%;right:-6%;animation-delay:-2s;}
+    .orb.c{width:220px;height:220px;background:#57ffb5;bottom:5%;left:20%;animation-delay:-4s;}
+
+    @keyframes float{
+      0%,100%{transform:translateY(0) translateX(0)}
+      50%{transform:translateY(-18px) translateX(10px)}
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      width:min(100% - 32px, var(--max));
+      margin-inline:auto;
+    }
+
+    .reveal{
+      opacity:0;
+      transform:translateY(24px);
+      transition:opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    header{
+      padding:22px 0 10px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      padding:14px 18px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:rgba(10,15,30,.56);
+      backdrop-filter:blur(18px);
+      box-shadow:var(--shadow);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
+    }
+
+    .brand-mark{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      position:relative;
+      background:
+        linear-gradient(135deg, rgba(115,240,255,.18), rgba(143,123,255,.2)),
+        rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      flex-shrink:0;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after{
+      content:"";
+      position:absolute;
+      inset:auto;
+      border-radius:999px;
+    }
+
+    .brand-mark::before{
+      width:24px;
+      height:24px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      top:6px;
+      left:6px;
+      box-shadow:0 0 20px rgba(115,240,255,.4);
+    }
+
+    .brand-mark::after{
+      width:18px;
+      height:18px;
+      right:7px;
+      bottom:7px;
+      border:3px solid rgba(255,255,255,.85);
+      transform:rotate(20deg);
+    }
+
+    .brand h1{
+      margin:0;
+      font-family:"Orbitron", sans-serif;
+      font-size:clamp(1rem, 1.5vw, 1.25rem);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    .brand p{
+      margin:.18rem 0 0;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(118,255,179,.22);
+      background:rgba(118,255,179,.08);
+      color:#dfffee;
+      white-space:nowrap;
+      font-size:.92rem;
+    }
+
+    .status-dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:var(--success);
+      box-shadow:0 0 0 6px rgba(118,255,179,.11), 0 0 16px rgba(118,255,179,.8);
+    }
+
+    .hero{
+      padding:34px 0 24px;
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:26px;
+      align-items:stretch;
+    }
+
+    .hero-copy{
+      padding:26px 6px 8px 0;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:#dce8ff;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      margin-bottom:18px;
+    }
+
+    .eyebrow::before{
+      content:"";
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 0 18px rgba(115,240,255,.6);
+    }
+
+    .hero h2{
+      margin:0;
+      font-family:"Orbitron", sans-serif;
+      font-weight:800;
+      line-height:.94;
+      letter-spacing:-.03em;
+      font-size:clamp(2.8rem, 7vw, 6.6rem);
+      max-width:9ch;
+      text-wrap:balance;
+    }
+
+    .hero h2 span{
+      background:linear-gradient(135deg, #ffffff 0%, #b7f6ff 42%, #b8a8ff 100%);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .hero-copy p{
+      max-width:58ch;
+      color:var(--muted);
+      font-size:1.04rem;
+      line-height:1.7;
+      margin:20px 0 0;
+    }
+
+    .hero-side{
+      border:1px solid var(--line);
+      border-radius:32px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+        var(--panel);
+      backdrop-filter:blur(20px);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      min-height:520px;
+    }
+
+    .hero-side::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 80% 10%, rgba(115,240,255,.18), transparent 22%),
+        radial-gradient(circle at 15% 85%, rgba(143,123,255,.16), transparent 22%);
+      pointer-events:none;
+    }
+
+    .window-bar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:14px 18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
+
+    .window-controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .window-controls span{
+      width:12px;height:12px;border-radius:50%;
+      display:inline-block;
+    }
+    .window-controls span:nth-child(1){background:#ff6b6b}
+    .window-controls span:nth-child(2){background:#ffd166}
+    .window-controls span:nth-child(3){background:#67e8a5}
+
+    .window-title{
+      font-family:"Orbitron", sans-serif;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:.82rem;
+      color:#d5ddff;
+    }
+
+    .interface{
+      padding:20px;
+      display:grid;
+      gap:18px;
+    }
+
+    .browser-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:14px;
+      align-items:center;
+    }
+
+    .search-shell{
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:20px;
+      background:rgba(5,10,24,.45);
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+
+    .search-shell svg{
+      width:20px;height:20px;opacity:.85;flex-shrink:0
+    }
+
+    .search-shell input{
+      width:100%;
+      background:transparent;
+      border:0;
+      outline:none;
+      color:var(--text);
+      font:600 1rem/1 "Inter", sans-serif;
+      letter-spacing:.02em;
+    }
+
+    .search-shell input::placeholder{color:#90a0d5}
+
+    .ghost-btn, .primary-btn{
+      appearance:none;
+      border:0;
+      outline:none;
+      cursor:pointer;
+      font:700 .98rem/1 "Inter", sans-serif;
+      padding:15px 18px;
+      border-radius:18px;
+      transition:transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+
+    .ghost-btn{
+      color:#dce5ff;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .ghost-btn:hover,
+    .primary-btn:hover{
+      transform:translateY(-2px) scale(1.01);
+    }
+    .ghost-btn:active,
+    .primary-btn:active{
+      transform:translateY(0) scale(.985);
+    }
+
+    .primary-btn{
+      color:#06111f;
+      background:linear-gradient(135deg, var(--accent), #98ffee);
+      box-shadow:0 10px 24px rgba(115,240,255,.2);
+    }
+
+    .id-zone{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .input-block{
+      padding:18px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.035);
+    }
+
+    .label{
+      display:block;
+      margin:0 0 12px;
+      color:#dbe5ff;
+      font-size:.86rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-weight:700;
+    }
+
+    .field{
+      width:100%;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(6,10,25,.5);
+      color:var(--text);
+      outline:none;
+      border-radius:16px;
+      padding:15px 14px;
+      font:600 1rem "Inter", sans-serif;
+      transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    .field:focus{
+      border-color:rgba(115,240,255,.6);
+      box-shadow:0 0 0 4px rgba(115,240,255,.12);
+      transform:translateY(-1px);
+    }
+
+    .launch-panel{
+      margin-top:4px;
+      padding:18px;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
+        rgba(5,10,24,.46);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .launch-panel.active{
+      border-color:rgba(115,240,255,.45);
+      box-shadow:
+        0 0 0 1px rgba(115,240,255,.12) inset,
+        0 0 30px rgba(115,240,255,.11);
+    }
+
+    .launch-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:16px;
+    }
+
+    .launch-text strong{
+      display:block;
+      font-size:1.04rem;
+      margin-bottom:6px;
+    }
+
+    .launch-text span{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .progress{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.05);
+    }
+
+    .progress-bar{
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--accent), var(--accent-2), var(--success));
+      box-shadow:0 0 24px rgba(115,240,255,.45);
+      transition:width .25s linear;
+    }
+
+    .launch-meta{
+      margin-top:14px;
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .place-result{
+      margin-top:18px;
+      padding:16px 18px;
+      border-radius:18px;
+      background:rgba(118,255,179,.08);
+      border:1px solid rgba(118,255,179,.22);
+      display:none;
+      color:#e8fff5;
+      font-weight:600;
+    }
+
+    .place-result.show{
+      display:block;
+      animation:fadeRise .45s ease;
+    }
+
+    @keyframes fadeRise{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .system-grid{
+      padding:34px 0 70px;
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:24px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:var(--panel);
+      backdrop-filter:blur(18px);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding:20px 22px 0;
+    }
+
+    .panel-head h3{
+      margin:0;
+      font-family:"Orbitron", sans-serif;
+      font-size:1.25rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .panel-head p{
+      margin:10px 0 0;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .steps{
+      padding:20px 22px 24px;
+      display:grid;
+      gap:18px;
+    }
+
+    .step{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    .num{
+      width:42px;height:42px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      font-family:"Orbitron", sans-serif;
+      color:#09101f;
+      font-size:.92rem;
+      background:linear-gradient(135deg, var(--accent), #d5ffff);
+      box-shadow:0 8px 22px rgba(115,240,255,.2);
+      flex-shrink:0;
+    }
+
+    .step h4{
+      margin:0 0 6px;
+      font-size:1rem;
+    }
+
+    .step p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.65;
+    }
+
+    .side-stack{
+      display:grid;
+      gap:24px;
+    }
+
+    .mini{
+      padding:20px 22px 22px;
+    }
+
+    .mini h4{
+      margin:0 0 8px;
+      font-family:"Orbitron", sans-serif;
+      font-size:1rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .mini p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .chip-row{
+      margin-top:16px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color:#dbe4ff;
+      font-size:.9rem;
+    }
+
+    footer{
+      padding:0 0 34px;
+    }
+
+    .footer-inner{
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:18px;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .stagger-1{animation:loadIn .75s ease .05s both}
+    .stagger-2{animation:loadIn .75s ease .15s both}
+    .stagger-3{animation:loadIn .75s ease .28s both}
+    .stagger-4{animation:loadIn .75s ease .38s both}
+    .stagger-5{animation:loadIn .75s ease .5s both}
+
+    @keyframes loadIn{
+      from{opacity:0;transform:translateY(22px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @media (max-width: 980px){
+      .hero,
+      .system-grid{
+        grid-template-columns:1fr;
+      }
+      .hero-copy{
+        padding-right:0;
+      }
+    }
+
+    @media (max-width: 680px){
+      .browser-row,
+      .id-zone{
+        grid-template-columns:1fr;
+      }
+      .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .hero h2{
+        max-width:12ch;
+      }
+      .launch-top{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .status-pill{
+        white-space:normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+
+  <header class="wrap">
+    <div class="topbar stagger-1">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1>Creator Studio v2</h1>
+          <p>Place ID launcher interface for Roblox Studio workflow</p>
+        </div>
+      </div>
+      <div class="status-pill" aria-label="System ready">
+        <span class="status-dot" aria-hidden="true"></span>
+        Ready to accept Store ID and Place ID
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow stagger-2">Game ID Create on Roblox Studio</div>
+        <h2 class="stagger-3">Launch your <span>place ID</span> into Studio</h2>
+        <p class="stagger-4">
+          This custom browser-style page lets you search an ID, enter a Store ID and Place ID,
+          then press Accept. When accepted, the border activates, the loading bar begins,
+          and the interface shows <strong>Launching to the roblox studio</strong> before simulating the Studio launch flow.
+        </p>
+      </div>
+
+      <section class="hero-side stagger-5" aria-label="Creator Studio launcher">
+        <div class="window-bar">
+          <div class="window-controls" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="window-title">Creator Studio v2 Browser</div>
+          <button class="ghost-btn" id="demoFillBtn" type="button">Use Demo IDs</button>
+        </div>
+
+        <div class="interface">
+          <div class="browser-row">
+            <label class="search-shell" for="searchId">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <input id="searchId" type="text" inputmode="numeric" placeholder="Search ID store or search ID place" aria-label="Search ID store or place">
+            </label>
+            <button class="ghost-btn" id="searchBtn" type="button">Search ID</button>
+          </div>
+
+          <div class="id-zone">
+            <div class="input-block">
+              <label class="label" for="storeId">Store ID</label>
+              <input class="field" id="storeId" type="text" inputmode="numeric" placeholder="Enter store ID">
+            </div>
+            <div class="input-block">
+              <label class="label" for="placeId">Place ID</label>
+              <input class="field" id="placeId" type="text" inputmode="numeric" placeholder="Enter place ID">
+            </div>
+          </div>
+
+          <div class="launch-panel" id="launchPanel" aria-live="polite">
+            <div class="launch-top">
+              <div class="launch-text">
+                <strong id="launchTitle">Waiting for accepted ID</strong>
+                <span id="launchSubtitle">Enter your Store ID and Place ID, then click Accept.</span>
+              </div>
+              <button class="primary-btn" id="acceptBtn" type="button">Accept</button>
+            </div>
+
+            <div class="progress" aria-label="Loading progress">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="launch-meta">
+              <span id="metaLeft">Studio status: idle</span>
+              <span id="metaRight">Place route: not started</span>
+            </div>
+
+            <div class="place-result" id="placeResult"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="system-grid">
+      <article class="panel reveal">
+        <div class="panel-head">
+          <h3>How it works</h3>
+          <p>
+            This is a front-end simulation of a Creator Studio browser experience. It visually mimics a launch workflow for Roblox Studio using your entered IDs.
+          </p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="num">01</div>
+            <div>
+              <h4>Search ID store or place</h4>
+              <p>Use the search field to copy or move an ID into the Store ID or Place ID inputs.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num">02</div>
+            <div>
+              <h4>Click Accept</h4>
+              <p>The launcher border appears active, the progress bar starts loading, and the message changes to launching mode.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num">03</div>
+            <div>
+              <h4>Launch simulation</h4>
+              <p>When loading finishes, the interface shows that the place ID has gone through into create and is ready in the Studio flow.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="side-stack">
+        <section class="panel mini reveal">
+          <h4>Launch notes</h4>
+          <p>
+            A website cannot directly open the real Roblox Studio app unless a custom desktop protocol or installed app integration is available.
+            This page simulates the launch UX in the browser.
+          </p>
+          <div class="chip-row">
+            <span class="chip">Search ID</span>
+            <span class="chip">Accept Button</span>
+            <span class="chip">Loading Bar</span>
+            <span class="chip">Place ID Result</span>
+          </div>
+        </section>
+
+        <section class="panel mini reveal">
+          <h4>GitHub-ready front-end</h4>
+          <p>
+            This single HTML file is ready to place in a GitHub repository and host as a static page.
+            You can later connect it to your own backend or custom launcher protocol if needed.
+          </p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <div class="footer-inner">
+      <span>Creator Studio v2 interface</span>
+      <span>Designed as a polished Roblox Studio launch mockup</span>
+    </div>
+  </footer>
+
+  <script>
+    const searchId = document.getElementById('searchId');
+    const storeId = document.getElementById('storeId');
+    const placeId = document.getElementById('placeId');
+    const searchBtn = document.getElementById('searchBtn');
+    const acceptBtn = document.getElementById('acceptBtn');
+    const demoFillBtn = document.getElementById('demoFillBtn');
+    const launchPanel = document.getElementById('launchPanel');
+    const launchTitle = document.getElementById('launchTitle');
+    const launchSubtitle = document.getElementById('launchSubtitle');
+    const progressBar = document.getElementById('progressBar');
+    const metaLeft = document.getElementById('metaLeft');
+    const metaRight = document.getElementById('metaRight');
+    const placeResult = document.getElementById('placeResult');
+
+    let loadingInterval = null;
+
+    function numbersOnly(value) {
+      return value.replace(/[^\d]/g, '');
+    }
+
+    [searchId, storeId, placeId].forEach(input => {
+      input.addEventListener('input', e => {
+        e.target.value = numbersOnly(e.target.value);
+      });
+    });
+
+    searchBtn.addEventListener('click', () => {
+      const value = numbersOnly(searchId.value.trim());
+
+      if (!value) {
+        launchTitle.textContent = 'No ID found';
+        launchSubtitle.textContent = 'Type a numeric ID in the search field first.';
+        metaLeft.textContent = 'Studio status: waiting for search';
+        metaRight.textContent = 'Place route: no ID entered';
+        return;
+      }
+
+      if (!storeId.value) {
+        storeId.value = value;
+        launchTitle.textContent = 'Store ID detected';
+        launchSubtitle.textContent = `Search ID ${value} moved into Store ID.`;
+        metaLeft.textContent = 'Studio status: store ID ready';
+        metaRight.textContent = 'Place route: waiting for place ID';
+      } else {
+        placeId.value = value;
+        launchTitle.textContent = 'Place ID detected';
+        launchSubtitle.textContent = `Search ID ${value} moved into Place ID.`;
+        metaLeft.textContent = 'Studio status: launch path prepared';
+        metaRight.textContent = `Place route: ${value} selected`;
+      }
+    });
+
+    demoFillBtn.addEventListener('click', () => {
+      searchId.value = '99887766';
+      storeId.value = '44112233';
+      placeId.value = '99887766';
+      launchTitle.textContent = 'Demo IDs loaded';
+      launchSubtitle.textContent = 'Press Accept to begin the launch simulation.';
+      metaLeft.textContent = 'Studio status: ready';
+      metaRight.textContent = 'Place route: demo configured';
+      placeResult.classList.remove('show');
+      placeResult.textContent = '';
+      progressBar.style.width = '0%';
+      launchPanel.classList.remove('active');
+    });
+
+    acceptBtn.addEventListener('click', () => {
+      const store = numbersOnly(storeId.value.trim());
+      const place = numbersOnly(placeId.value.trim());
+
+      if (!store || !place) {
+        launchTitle.textContent = 'Missing required ID';
+        launchSubtitle.textContent = 'Please enter both Store ID and Place ID before clicking Accept.';
+        metaLeft.textContent = 'Studio status: blocked';
+        metaRight.textContent = 'Place route: incomplete IDs';
+        placeResult.classList.remove('show');
+        return;
+      }
+
+      launchPanel.classList.add('active');
+      placeResult.classList.remove('show');
+      placeResult.textContent = '';
+      launchTitle.textContent = 'Launching to the roblox studio';
+      launchSubtitle.textContent = `Accepted Store ID ${store} and Place ID ${place}. Initializing Studio launch.`;
+      metaLeft.textContent = 'Studio status: launching';
+      metaRight.textContent = `Place route: preparing ${place}`;
+      progressBar.style.width = '0%';
+
+      if (loadingInterval) clearInterval(loadingInterval);
+
+      let progress = 0;
+      loadingInterval = setInterval(() => {
+        progress += Math.floor(Math.random() * 12) + 6;
+        if (progress > 100) progress = 100;
+
+        progressBar.style.width = progress + '%';
+
+        if (progress < 35) {
+          metaLeft.textContent = 'Studio status: connecting launcher';
+          metaRight.textContent = `Place route: reading store ${store}`;
+        } else if (progress < 70) {
+          metaLeft.textContent = 'Studio status: loading workspace';
+          metaRight.textContent = `Place route: opening place ${place}`;
+        } else if (progress < 100) {
+          metaLeft.textContent = 'Studio status: almost ready';
+          metaRight.textContent = `Place route: create flow active`;
+        }
+
+        if (progress >= 100) {
+          clearInterval(loadingInterval);
+          metaLeft.textContent = 'Studio status: launched';
+          metaRight.textContent = `Place route: ${place} loaded into create`;
+          launchTitle.textContent = 'Roblox Studio opened';
+          launchSubtitle.textContent = 'Your place ID went through in create and is ready.';
+          placeResult.textContent = `Done: Place ID ${place} went go through in create. GitHub front-end launch flow complete.`;
+          placeResult.classList.add('show');
+
+          // Simulated custom protocol attempt (may not work in browsers without registered app/protocol)
+          try {
+            window.location.href = 'roblox-studio://';
+          } catch (e) {
+            // ignored
+          }
+        }
+      }, 240);
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
